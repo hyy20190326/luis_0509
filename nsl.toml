@@ -1,0 +1,26 @@
+name = "ns_luis"
+endpoint = "127.0.0.1:8059"
+web_prefix = "xlp/receive_voice_stream/v1"
+# file_prefix = "/var/lib/asterisk/sounds/fifo/"
+file_prefix = "/Users/gary/tmp/fifo/"
+# notify_prefix = 'http://127.0.0.1:8059/xlp/ai_robot/v1?action=streamplay&from=zhuiyi'
+notify_prefix = 'http://127.0.0.1:8059/xlp/ai_robot/v1?from=zhuiyi'
+asr_prefix = '/xlp/short_voice_silence_server'
+# debug模式下会在crash时输出更多信息。默认为 false。
+debug = false
+# 日志设置，有error, warn, info, debug, trace这几个级别。默认为 info 级别。
+log = "hss=debug"
+# 日志文件目录，不设置的时候只在屏幕上显示, stdio, stderr。
+log_folder = "/var/log/hss"
+# 日志文件大小限定值，超过这个设定会自动切分。默认值10M
+log_rotate_size = 10000000
+# 单元测试和集成测试的回环。
+test_prefix = "xlp/ai_robot/v1"
+# json 包体的最大尺寸，用于适时启动解析过程。
+# Max size of json body size for parse. = 3.2MB = 200 seconds.
+max_json_size = 3200000
+# Application ID for outgoing stream.
+# 预先定义的app_id
+app_id = "1500000615"
+# 预先定义的认证字段
+auth_key = "05e31d5bbdcd81dfb4ad13b03f2cd28c5708b3e784b6a15d15777fc7f584d29a"

@@ -1,2 +1,3 @@
 # ns_luis
-LUIS AI streaming server for Neunit System.
+
+Microsoft LUIS driver for Neunit System.

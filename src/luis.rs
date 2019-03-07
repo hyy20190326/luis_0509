@@ -144,6 +144,7 @@ impl Handler<SessionEvent> for Keeper {
     ) -> Self::Result {
         match cmd.action.as_str() {
             "stop" => {
+                log::debug!("Session {} is stopped.", cmd.sn);
                 if let Some(session) = self.table.remove(&cmd.sn) {
                     session.do_send(StopSession);
                     Ok(())
@@ -218,6 +219,7 @@ impl Actor for Session {
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
+        log::debug!("session {} is started.", self.payload.sn);
         let es = match self.recognizer.start() {
             Ok(stream) => stream,
             Err(err) => {
@@ -255,6 +257,7 @@ impl Handler<Frame> for Session {
 impl Handler<StopSession> for Session {
     type Result = ();
     fn handle(&mut self, _: StopSession, _: &mut Context<Self>) {
+        log::debug!("session {} is stopped.", self.payload.sn);
         let _ = self.recognizer.close_stream();
     }
 }
@@ -286,12 +289,13 @@ fn handle_event_stream(
         } else {
             se.intention = Some(er.intent()?);
         }
-        let detail = er.details()?;
-        if detail.is_object() {
-            se.confidence = detail["topScoringIntent"]["score"].as_f64();
-            se.intention_desc = detail["topScoringIntent"]["intent"]
-                .as_str()
-                .map(|i| i.to_owned());
+        if let Ok(detail) = er.details() {
+            if detail.is_object() {
+                se.confidence = detail["topScoringIntent"]["score"].as_f64();
+                se.intention_desc = detail["topScoringIntent"]["intent"]
+                    .as_str()
+                    .map(|i| i.to_owned());
+            }
         }
         se.text = Some(er.text()?);
         se.echo = Some(actor.payload.recordfile.clone());

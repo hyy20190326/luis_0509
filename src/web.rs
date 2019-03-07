@@ -38,7 +38,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Settings {
-            name: "Neunit Http Stream Server".to_owned(),
+            name: "Neunit Speech AI Server".to_owned(),
             debug: false,
             log: "hss=info".to_owned(),
             log_folder: String::new(),

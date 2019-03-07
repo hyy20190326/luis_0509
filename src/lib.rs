@@ -13,7 +13,7 @@ pub type Result<T = (), E = Error> = std::result::Result<T, E>;
 use luis::{Frame, KEEPER};
 
 #[no_mangle]
-pub unsafe extern "C" fn start_hss(conf_file: *const c_char) -> i32 {
+pub unsafe extern "C" fn start_service(conf_file: *const c_char) -> i32 {
     let filename = CStr::from_ptr(conf_file).to_string_lossy();
     match web::start(&filename) {
         Ok(_) => 0,
@@ -47,3 +47,4 @@ pub unsafe extern "C" fn write_stream(
     KEEPER.do_send(frame);
     return len as i32;
 }
+

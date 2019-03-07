@@ -84,6 +84,10 @@ pub struct Keeper {
 
 impl Actor for Keeper {
     type Context = Context<Self>;
+
+    fn started(&mut self, _ctx: &mut Self::Context) {
+        log::info!("KEEPER is started!");
+    }
 }
 
 impl Supervised for Keeper {}

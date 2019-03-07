@@ -1,7 +1,7 @@
 [package]
 name = "ns_luis"
 description = "LUIS Driver SDK"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Gary Hai <gary@neunit.com>"]
 edition = "2018"
 

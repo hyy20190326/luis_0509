@@ -25,8 +25,8 @@ release:
 dll:
 	cd proxy && cargo build --release $(CARGO_FLAGS)
 
-run:
-	cargo run -- -c hss.toml
+run: build
+	cd /tmp/rust/debug && ./ffi_test
 
 skeptic:
 	USE_SKEPTIC=1 cargo test $(CARGO_FLAGS)

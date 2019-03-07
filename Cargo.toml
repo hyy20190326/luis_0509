@@ -3,11 +3,12 @@ name = "ns_luis"
 description = "LUIS Driver SDK"
 version = "0.1.1"
 authors = ["Gary Hai <gary@neunit.com>"]
+build = "build.rs"
 edition = "2018"
 
 [lib]
 name = "ns_luis"
-crate-type = ["dylib"]
+crate-type = ["dylib", "rlib"]
 
 [dependencies]
 actix-web = "0.7.18"

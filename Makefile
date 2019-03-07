@@ -22,10 +22,11 @@ format:
 release:
 	cargo build --release $(CARGO_FLAGS)
 
-dll:
-	cd proxy && cargo build --release $(CARGO_FLAGS)
+cpp:
+	cargo clean -p ns_luis
+	BUILD_CPP=1 cargo build $(CARGO_FLAGS)
 
-run: build
+run: cpp
 	cd /tmp/rust/debug && ./ffi_test
 
 skeptic:

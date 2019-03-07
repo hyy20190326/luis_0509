@@ -25,6 +25,15 @@ pub unsafe extern "C" fn start_service(conf_file: *const c_char) -> i32 {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn read_stream(
+    _id: *const c_char,
+    _buffer: *mut c_char,
+    _len: usize,
+) -> i32 {
+    -1
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn write_stream(
     id: *const c_char,
     buffer: *const c_char,

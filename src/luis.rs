@@ -155,7 +155,8 @@ impl Handler<SessionEvent> for Keeper {
             }
             "start" => {
                 if let Some(ref builder) = self.builder {
-                    let recognizer = builder.intent_recognizer()?;
+                    // let recognizer = builder.intent_recognizer()?;
+                    let recognizer = builder.recognizer()?;
                     let sn = cmd.sn.clone();
                     let payload = cmd;
                     let session = Session {

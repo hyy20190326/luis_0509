@@ -115,6 +115,7 @@ impl Handler<Initialize> for Keeper {
         builder
             .set_flags(Flags::Recognized | Flags::SpeechDetection)
             .put_language(c.language.as_str())?
+            .set_audio(cfg.0.audio)
             .set_model_id(c.intent_model.as_str())
             .set_intents(c.intents.as_ref());
         self.builder = Some(builder);
@@ -304,7 +305,7 @@ fn handle_event_stream(
     }
 
     let url = &actor.settings.notify_prefix;
-    log::debug!("Notify started: {}: {:?}", url, se);
+    log::debug!("Notify started: {}: {:?}", url, serde_json::to_string(&se));
     // body should be consumed for connection keep alive.
     httpc::post(url)
         .header("Authorization", actor.settings.auth_key.as_str())

@@ -272,6 +272,7 @@ fn handle_event_stream(
         ..Default::default()
     };
     let flag = evt.flag();
+    log::debug!("luis event fired: {:?}", flag);
     if flag.intersects(Flags::SpeechStartDetected) {
         se.event = "session_start".to_owned();
     } else if flag.intersects(Flags::SpeechEndDetected) {
@@ -285,9 +286,13 @@ fn handle_event_stream(
         } else {
             se.intention = Some(er.intent()?);
         }
-        let detail = &er.details()?["topScoringIntent"];
-        se.confidence = detail["score"].as_f64();
-        se.intention_desc = detail["intent"].as_str().map(|i| i.to_owned());
+        let detail = er.details()?;
+        if detail.is_object() {
+            se.confidence = detail["topScoringIntent"]["score"].as_f64();
+            se.intention_desc = detail["topScoringIntent"]["intent"]
+                .as_str()
+                .map(|i| i.to_owned());
+        }
         se.text = Some(er.text()?);
         se.echo = Some(actor.payload.recordfile.clone());
     } else {

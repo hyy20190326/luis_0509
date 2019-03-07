@@ -53,6 +53,7 @@ pub unsafe extern "C" fn write_stream(
     };
     let buf = std::slice::from_raw_parts(buffer as *const u8, len);
     let frame = Frame::new(sid, buf);
+    log::trace!("writer stream: {}", sid);
     KEEPER.do_send(frame);
     return len as i32;
 }

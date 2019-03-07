@@ -163,6 +163,7 @@ impl JsonResult {
 fn on_session_event(
     info: Query<SessionEvent>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
+    log::trace!("Received session event: {:?}", info);
     KEEPER
         .send(info.into_inner())
         .then(|res| match res {

@@ -27,13 +27,13 @@ auth_key = "05e31d5bbdcd81dfb4ad13b03f2cd28c5708b3e784b6a15d15777fc7f584d29a"
 
 [luis]
 # LUIS service subscription key.
-subscription = ""
+subscription = "7c5997f31df54000a94dc9529750724d"
 # LUIS service region.
 region = "eastasia"
 # Language of the speech to recognize.
 language = "zh-CN"
 # Application ID of the customized intents model.
-intent_model = ""
+intent_model = "b68bca70-e540-44bd-82bf-044e73f8e52c"
 # A set of intents names or phrase if intent_model is absent.
 intents = []
 

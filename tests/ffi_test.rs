@@ -1,10 +1,5 @@
-use ns_luis::{start_service, Result, luis::*};
-use std::{
-    ffi::CString,
-    thread::{sleep, spawn},
-    time::Duration,
-};
-use serde_json;
+use ns_luis::{luis::*, start_service, Result};
+use std::{ffi::CString, thread::spawn};
 
 #[test]
 fn simulate() -> Result {
@@ -13,7 +8,7 @@ fn simulate() -> Result {
         unsafe { start_service(conf.as_ptr()) };
     });
 
-    let cmd = SessionEvent {
+    let _cmd = SessionEvent {
         action: "start".to_owned(),
         sn: "0000000000".to_owned(),
         recordfile: "abc.wav".to_owned(),

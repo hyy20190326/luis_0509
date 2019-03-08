@@ -241,6 +241,11 @@ impl Actor for Session {
             .finish()
             .spawn(ctx);
     }
+
+    fn stopped(&mut self, _ctx: &mut Self::Context) {
+        log::trace!("session {} is stopped.", self.payload.sn);
+        let _ = self.recognizer.close_stream();
+    }
 }
 
 impl Handler<Frame> for Session {
@@ -258,9 +263,8 @@ impl Handler<Frame> for Session {
 
 impl Handler<StopSession> for Session {
     type Result = ();
-    fn handle(&mut self, _: StopSession, _: &mut Context<Self>) {
-        log::debug!("session {} is stopped.", self.payload.sn);
-        let _ = self.recognizer.close_stream();
+    fn handle(&mut self, _: StopSession, ctx: &mut Context<Self>) {
+        ctx.stop();
     }
 }
 

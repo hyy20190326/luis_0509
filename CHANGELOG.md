@@ -4,6 +4,7 @@
 
 - build.rs及Makefile 支持条件编译。
 - 补上一个空的 read_stream。
+- 把 close_stream 移到 Actor::stopped 中执行。
 
 ## [0.1.1] - 2019-3-7
 

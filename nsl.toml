@@ -6,6 +6,7 @@ file_prefix = "/Users/gary/tmp/fifo/"
 # notify_prefix = 'http://127.0.0.1:8059/xlp/ai_robot/v1?action=streamplay&from=zhuiyi'
 notify_prefix = 'http://127.0.0.1:8059/xlp/ai_robot/v1?from=zhuiyi'
 asr_prefix = '/xlp/short_voice_silence_server'
+offline_asr_prefix = 'xlp/offline_tencent_asr'
 # debug模式下会在crash时输出更多信息。默认为 false。
 debug = false
 # 日志设置，有error, warn, info, debug, trace这几个级别。默认为 info 级别。

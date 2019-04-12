@@ -3,18 +3,18 @@
 use crate::{err_msg, web::Settings, Result};
 use actix_web::{
     actix::{
-        fut, Actor, ActorContext, ActorStream, Addr, Context,
+        fut, spawn, Actor, ActorContext, ActorStream, Addr, Context,
         ContextFutureSpawner, Handler, Message, Supervised, SystemService,
         WrapFuture, WrapStream,
     },
     client as httpc, HttpMessage,
 };
-use futures::Future;
+use futures::{Future, Stream};
 use lazy_static::lazy_static;
 use log;
 use luis_sys::speech::{
-    AsrResult, Event, EventResult, Flags, RecognitionResult, Recognizer,
-    RecognizerConfig, Session as _Session,
+    AsrResult, Event, EventResult, Flags, IntentResult, RecognitionResult,
+    Recognizer, RecognizerConfig, Session as _, SpeechResult,
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fmt, sync::Arc, time::Duration};
@@ -45,6 +45,17 @@ impl Message for Frame {
 pub struct Initialize(pub Arc<Settings>);
 
 impl Message for Initialize {
+    type Result = Result;
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
+pub struct OfflineAsr {
+    pub wavfile: String,
+    pub callbackurl: String,
+}
+
+impl Message for OfflineAsr {
     type Result = Result;
 }
 
@@ -174,6 +185,90 @@ impl Handler<SessionEvent> for Keeper {
             _ => Err(err_msg(format!("Unknown session event: {}", cmd))),
         }
     }
+}
+
+impl Handler<OfflineAsr> for Keeper {
+    type Result = Result;
+
+    fn handle(
+        &mut self,
+        cmd: OfflineAsr,
+        _ctx: &mut Context<Self>,
+    ) -> Self::Result {
+        if let Some(ref mut builder) = self.builder {
+            let mut reco = builder
+                .set_audio_file_path(cmd.wavfile.as_str())
+                .recognizer()?;
+            let promise = reco
+                .start()?
+                .set_filter(Flags::Recognized)
+                .and_then(|evt| extract_asr(evt).map_err(|_| ()))
+                .collect()
+                .then(move |results| {
+                    let jsr = match results {
+                        Ok(texts) => AsrResponse {
+                            session: String::new(),
+                            code: String::from("0"),
+                            text: texts,
+                        },
+                        Err(_) => AsrResponse {
+                            session: String::new(),
+                            code: String::from("-1"),
+                            text: Vec::new(),
+                        },
+                    };
+                    log::debug!(
+                        "ASR results callback: {}: {:?}",
+                        cmd.callbackurl,
+                        serde_json::to_string(&jsr)
+                    );
+                    // body should be consumed for connection keep alive.
+                    httpc::post(cmd.callbackurl)
+                        .json(jsr)
+                        .map_err(|err| {
+                            log::error!("Failed to push data: {}", err);
+                            err_msg("Failed to push data.")
+                        })
+                        .unwrap()
+                        .send()
+                        .map_err(|err| log::error!("Push data error: {}", err))
+                        .and_then(|resp| {
+                            resp.body().map_err(|err| log::error!("{}", err))
+                        })
+                        .and_then(|_| Ok(()))
+                });
+            spawn(promise);
+            Ok(())
+        } else {
+            Err(err_msg("Keeper is not initialized."))
+        }
+    }
+}
+
+#[derive(Serialize)]
+struct AsrText {
+    text: String,
+    offset: Duration,
+    duration: Duration,
+}
+
+#[derive(Serialize)]
+struct AsrResponse {
+    session: String,
+    code: String,
+    text: Vec<AsrText>,
+}
+
+fn extract_asr(evt: Event) -> Result<AsrText> {
+    let er = EventResult::from_event(evt)?;
+    let text = er.text()?;
+    let offset = er.offset()?;
+    let duration = er.duration()?;
+    Ok(AsrText {
+        text,
+        offset,
+        duration,
+    })
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]

@@ -1,5 +1,5 @@
 use crate::{
-    luis::{Initialize, SessionEvent, KEEPER},
+    luis::{Initialize, SessionEvent, KEEPER, OfflineAsr},
     Error, Result,
 };
 use actix_web::{
@@ -25,6 +25,7 @@ pub struct Settings {
     pub endpoint: String,
     pub web_prefix: String,
     pub asr_prefix: String,
+    pub offline_asr_prefix: String,
     pub notify_prefix: String,
     pub file_prefix: String,
     pub test_prefix: String,
@@ -46,6 +47,7 @@ impl Default for Settings {
             endpoint: "127.0.0.1:8059".to_owned(),
             web_prefix: "xlp/receive_voice_stream/v1".to_owned(),
             asr_prefix: "/xlp/short_voice_silence_server".to_owned(),
+            offline_asr_prefix: "xlp/offline_tencent_asr".to_owned(),
             notify_prefix: "http://127.0.0.1:8059/xlp/ai_robot/v1?action=streamplay&from=zhuiyi&streamName=1&serialNo=".to_owned(),
             file_prefix: String::new(),
             test_prefix: "xlp/ai_robot/v1".to_owned(),
@@ -127,6 +129,9 @@ fn start_web(conf: Arc<Settings>) -> Result {
             .resource(&conf.asr_prefix, |r| {
                 r.method(http::Method::GET).with_async(on_session_event)
             })
+            .resource(&conf.offline_asr_prefix, |r| {
+                r.method(http::Method::GET).with_async(on_offline_asr_event)
+            })
     })
     .bind(&cfg.endpoint)
     .unwrap()
@@ -164,6 +169,20 @@ fn on_session_event(
     info: Query<SessionEvent>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     log::trace!("Received session event: {:?}", info);
+    KEEPER
+        .send(info.into_inner())
+        .then(|res| match res {
+            Ok(Ok(())) => Ok(JsonResult::success()),
+            Ok(Err(err)) => Ok(JsonResult::error(err)),
+            Err(err) => Ok(JsonResult::error(err)),
+        })
+        .responder()
+}
+
+fn on_offline_asr_event(
+    info: Query<OfflineAsr>,
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    log::trace!("Received offline ASR request: {:?}", info);
     KEEPER
         .send(info.into_inner())
         .then(|res| match res {

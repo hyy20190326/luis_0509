@@ -200,7 +200,7 @@ impl Handler<OfflineAsr> for Keeper {
         if let Some(ref mut builder) = self.builder {
             let reco = builder
                 //.set_audio_file_path(cmd.wavfile.as_str())
-                .set_audio_file_path("/work/waves/left_01.wav")
+                .set_audio_file_path(cmd.wavfile.as_str())
                 .recognizer()?;
             let reco = Rc::new(RefCell::new(reco));
             let reco1 = Rc::clone(&reco);

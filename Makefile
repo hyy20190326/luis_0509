@@ -26,8 +26,8 @@ cpp:
 	cargo clean -p ns_luis
 	BUILD_CPP=1 cargo build $(CARGO_FLAGS)
 
-run: cpp
-	cd /tmp/rust/debug && ./ffi_test
+run:
+	cargo run
 
 skeptic:
 	USE_SKEPTIC=1 cargo test $(CARGO_FLAGS)

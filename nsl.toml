@@ -28,7 +28,7 @@ auth_key = "05e31d5bbdcd81dfb4ad13b03f2cd28c5708b3e784b6a15d15777fc7f584d29a"
 
 [luis]
 # LUIS service subscription key.
-subscription = "7c5997f31df54000a94dc9529750724d"
+subscription = "f1c83fcca39e4da7a5a4e7abb2809ee8"
 # LUIS service region.
 region = "eastasia"
 # Language of the speech to recognize.

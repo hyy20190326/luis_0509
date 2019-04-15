@@ -3,7 +3,7 @@
 use crate::{err_msg, web::Settings, Result};
 use actix_web::{
     actix::{
-        fut, spawn, Actor, ActorContext, ActorStream, Addr, Context,
+        fut, Actor, ActorContext, ActorStream, Addr, Context,
         ContextFutureSpawner, Handler, Message, Supervised, SystemService,
         WrapFuture, WrapStream,
     },
@@ -17,7 +17,9 @@ use luis_sys::speech::{
     Recognizer, RecognizerConfig, Session as _, SpeechResult,
 };
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, fmt, sync::Arc, time::Duration};
+use std::{
+    cell::RefCell, collections::HashMap, fmt, rc::Rc, sync::Arc, time::Duration,
+};
 
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
 
@@ -193,18 +195,21 @@ impl Handler<OfflineAsr> for Keeper {
     fn handle(
         &mut self,
         cmd: OfflineAsr,
-        _ctx: &mut Context<Self>,
+        ctx: &mut Context<Self>,
     ) -> Self::Result {
         if let Some(ref mut builder) = self.builder {
-            let mut reco = builder
+            let reco = builder
                 .set_audio_file_path(cmd.wavfile.as_str())
                 .recognizer()?;
-            let promise = reco
+            let reco = Rc::new(RefCell::new(reco));
+            let reco1 = Rc::clone(&reco);
+            reco.borrow_mut()
                 .start()?
                 .set_filter(Flags::Recognized)
                 .and_then(|evt| extract_asr(evt).map_err(|_| ()))
                 .collect()
                 .then(move |results| {
+                    let _ = reco1;
                     let jsr = match results {
                         Ok(texts) => AsrResponse {
                             session: String::new(),
@@ -236,8 +241,9 @@ impl Handler<OfflineAsr> for Keeper {
                             resp.body().map_err(|err| log::error!("{}", err))
                         })
                         .and_then(|_| Ok(()))
-                });
-            spawn(promise);
+                })
+                .into_actor(self)
+                .spawn(ctx);
             Ok(())
         } else {
             Err(err_msg("Keeper is not initialized."))

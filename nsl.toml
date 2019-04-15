@@ -1,5 +1,5 @@
 name = "ns_luis"
-endpoint = "127.0.0.1:8059"
+endpoint = "127.0.0.1:8999"
 web_prefix = "xlp/receive_voice_stream/v1"
 # file_prefix = "/var/lib/asterisk/sounds/fifo/"
 file_prefix = "/Users/gary/tmp/fifo/"

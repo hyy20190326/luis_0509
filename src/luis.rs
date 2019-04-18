@@ -197,9 +197,11 @@ impl Handler<OfflineAsr> for Keeper {
         cmd: OfflineAsr,
         ctx: &mut Context<Self>,
     ) -> Self::Result {
+        let file_path = cmd.wavfile.repace("file://", "");
         if let Some(ref mut builder) = self.builder {
             let reco = builder
-                .set_audio_file_path(cmd.wavfile.as_str())
+                //.set_audio_file_path(cmd.wavfile.as_str())
+                .set_audio_file_path(file_path.as_str())
                 .recognizer()?;
             let reco = Rc::new(RefCell::new(reco));
             let reco1 = Rc::clone(&reco);

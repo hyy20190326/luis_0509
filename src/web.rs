@@ -182,7 +182,8 @@ fn on_session_event(
 fn on_offline_asr_event(
     info: Query<OfflineAsr>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    log::trace!("Received offline ASR request: {:?}", info);
+    //log::trace!("Received offline ASR request: {:?}", info);
+    log::debug!("Received offline ASR request: {:?}", info);
     KEEPER
         .send(info.into_inner())
         .then(|res| match res {

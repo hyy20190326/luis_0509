@@ -9,12 +9,11 @@ use actix_web::{
     },
     client as httpc, HttpMessage,
 };
-use futures::{Future, Stream};
+use futures::Future;
 use lazy_static::lazy_static;
 use log;
 use luis_sys::speech::{
-    AsrResult, Event, EventResult, Flags, IntentResult, RecognitionResult,
-    Recognizer, RecognizerConfig, Session as _, SpeechResult,
+    Event, EventResult, Flags, Recognizer, RecognizerConfig, Session as _, SpeechResult,
 };
 use serde::{Deserialize, Serialize};
 use std::{

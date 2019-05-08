@@ -293,23 +293,17 @@ fn handle_event_stream(
         se.event = "session_end".to_owned();
     } else if flag.intersects(Flags::Recognized) {
         let er = EventResult::from_event(evt)?;
-        let reason = er.reason();
-        se.event = "session_nlp_event".to_owned();
-        if reason.intersects(Flags::NoMatch) {
-            se.intention = Some(String::new());
-        } else {
-            se.intention = Some(er.intent()?);
-        }
-        if let Ok(detail) = er.details() {
-            if detail.is_object() {
-                se.confidence = detail["topScoringIntent"]["score"].as_f64();
-                se.intention_desc = detail["topScoringIntent"]["intent"]
-                    .as_str()
-                    .map(|i| i.to_owned());
-            }
-        }
+
+        se.event = "session_asr_text".to_owned();
+        
         se.text = Some(er.text()?);
         se.echo = Some(actor.payload.recordfile.clone());
+
+        se.result_sequence = Some(0);
+        se.current_consume_sequence_id = Some(0);
+        se.errormsg = Some(String::from("0"));
+        se.errorcode = Some(0);
+
     } else {
         return Err(err_msg("unknown event type"));
     }

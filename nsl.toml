@@ -1,5 +1,5 @@
 name = "ns_luis"
-endpoint = "127.0.0.1:8999"
+endpoint = "127.0.0.1:8059"
 web_prefix = "xlp/receive_voice_stream/v1"
 # file_prefix = "/var/lib/asterisk/sounds/fifo/"
 file_prefix = "/Users/gary/tmp/fifo/"
@@ -12,7 +12,7 @@ debug = false
 # 日志设置，有error, warn, info, debug, trace这几个级别。默认为 info 级别。
 log = "ns_luis=debug"
 # 日志文件目录，不设置的时候只在屏幕上显示, stdio, stderr。
-log_folder = "/var/log/luis"
+log_folder = "/var/log/ns_luis"
 # 日志文件大小限定值，超过这个设定会自动切分。默认值10M
 log_rotate_size = 10000000
 # 单元测试和集成测试的回环。

@@ -18,7 +18,7 @@ use luis_sys::speech::{
 };
 use serde::{Deserialize, Serialize};
 use std::{
-    cell::RefCell, collections::HashMap, fmt, rc::Rc, sync::Arc, time::Duration,
+    collections::HashMap, fmt, sync::Arc, time::Duration,
 };
 
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
@@ -50,16 +50,6 @@ impl Message for Initialize {
     type Result = Result;
 }
 
-#[derive(Debug, Default, Deserialize)]
-#[serde(default)]
-pub struct OfflineAsr {
-    pub wavfile: String,
-    pub callbackurl: String,
-}
-
-impl Message for OfflineAsr {
-    type Result = Result;
-}
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(default)]
@@ -189,95 +179,7 @@ impl Handler<SessionEvent> for Keeper {
     }
 }
 
-impl Handler<OfflineAsr> for Keeper {
-    type Result = Result;
 
-    fn handle(
-        &mut self,
-        cmd: OfflineAsr,
-        ctx: &mut Context<Self>,
-    ) -> Self::Result {
-        let file_path = cmd.wavfile.repace("file://", "");
-        if let Some(ref mut builder) = self.builder {
-            let reco = builder
-                //.set_audio_file_path(cmd.wavfile.as_str())
-                .set_audio_file_path(file_path.as_str())
-                .recognizer()?;
-            let reco = Rc::new(RefCell::new(reco));
-            let reco1 = Rc::clone(&reco);
-            reco.borrow_mut()
-                .start()?
-                .set_filter(Flags::Recognized)
-                .and_then(|evt| extract_asr(evt).map_err(|_| ()))
-                .collect()
-                .then(move |results| {
-                    let _ = reco1;
-                    let jsr = match results {
-                        Ok(texts) => AsrResponse {
-                            session: String::new(),
-                            code: String::from("0"),
-                            text: texts,
-                        },
-                        Err(_) => AsrResponse {
-                            session: String::new(),
-                            code: String::from("-1"),
-                            text: Vec::new(),
-                        },
-                    };
-                    log::debug!(
-                        "ASR results callback: {}: {:?}",
-                        cmd.callbackurl,
-                        serde_json::to_string(&jsr)
-                    );
-                    // body should be consumed for connection keep alive.
-                    httpc::post(cmd.callbackurl)
-                        .json(jsr)
-                        .map_err(|err| {
-                            log::error!("Failed to push data: {}", err);
-                            err_msg("Failed to push data.")
-                        })
-                        .unwrap()
-                        .send()
-                        .map_err(|err| log::error!("Push data error: {}", err))
-                        .and_then(|resp| {
-                            resp.body().map_err(|err| log::error!("{}", err))
-                        })
-                        .and_then(|_| Ok(()))
-                })
-                .into_actor(self)
-                .spawn(ctx);
-            Ok(())
-        } else {
-            Err(err_msg("Keeper is not initialized."))
-        }
-    }
-}
-
-#[derive(Serialize)]
-struct AsrText {
-    text: String,
-    offset: Duration,
-    duration: Duration,
-}
-
-#[derive(Serialize)]
-struct AsrResponse {
-    session: String,
-    code: String,
-    text: Vec<AsrText>,
-}
-
-fn extract_asr(evt: Event) -> Result<AsrText> {
-    let er = EventResult::from_event(evt)?;
-    let text = er.text()?;
-    let offset = er.offset()?;
-    let duration = er.duration()?;
-    Ok(AsrText {
-        text,
-        offset,
-        duration,
-    })
-}
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 #[serde(default)]

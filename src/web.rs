@@ -1,5 +1,5 @@
 use crate::{
-    luis::{Initialize, SessionEvent, KEEPER, OfflineAsr},
+    luis::{Initialize, SessionEvent, KEEPER},
     Error, Result,
 };
 use actix_web::{
@@ -129,9 +129,6 @@ fn start_web(conf: Arc<Settings>) -> Result {
             .resource(&conf.asr_prefix, |r| {
                 r.method(http::Method::GET).with_async(on_session_event)
             })
-            .resource(&conf.offline_asr_prefix, |r| {
-                r.method(http::Method::GET).with_async(on_offline_asr_event)
-            })
     })
     .bind(&cfg.endpoint)
     .unwrap()
@@ -179,17 +176,3 @@ fn on_session_event(
         .responder()
 }
 
-fn on_offline_asr_event(
-    info: Query<OfflineAsr>,
-) -> impl Future<Item = HttpResponse, Error = Error> {
-    //log::trace!("Received offline ASR request: {:?}", info);
-    log::debug!("Received offline ASR request: {:?}", info);
-    KEEPER
-        .send(info.into_inner())
-        .then(|res| match res {
-            Ok(Ok(())) => Ok(JsonResult::success()),
-            Ok(Err(err)) => Ok(JsonResult::error(err)),
-            Err(err) => Ok(JsonResult::error(err)),
-        })
-        .responder()
-}

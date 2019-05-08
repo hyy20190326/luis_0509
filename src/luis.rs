@@ -286,6 +286,9 @@ fn handle_event_stream(
     };
     let flag = evt.flag();
     log::debug!("luis event fired: {:?}", flag);
+    if flag.intersects(Flags::SessionStarted) {
+        log::debug!("luis event: {:?}", flag);
+    }
     if flag.intersects(Flags::SpeechStartDetected) {
         se.event = "session_start".to_owned();
     } else if flag.intersects(Flags::SpeechEndDetected) {
@@ -304,6 +307,7 @@ fn handle_event_stream(
         se.errorcode = Some(0);
 
     } else {
+        log::debug!("luis event: {:?}", flag);
         return Err(err_msg("unknown event type"));
     }
 

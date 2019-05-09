@@ -175,4 +175,3 @@ fn on_session_event(
         })
         .responder()
 }
-

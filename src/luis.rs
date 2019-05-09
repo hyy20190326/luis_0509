@@ -13,12 +13,11 @@ use futures::Future;
 use lazy_static::lazy_static;
 use log;
 use luis_sys::speech::{
-    Event, EventResult, Flags, Recognizer, RecognizerConfig, Session as _, SpeechResult,
+    Event, EventResult, Flags, Recognizer, RecognizerConfig, Session as _,
+    SpeechResult,
 };
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::HashMap, fmt, sync::Arc, time::Duration,
-};
+use std::{collections::HashMap, fmt, sync::Arc, time::Duration};
 
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
 
@@ -48,7 +47,6 @@ pub struct Initialize(pub Arc<Settings>);
 impl Message for Initialize {
     type Result = Result;
 }
-
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(default)]
@@ -118,8 +116,8 @@ impl Handler<Initialize> for Keeper {
             .set_flags(Flags::Recognized | Flags::SpeechDetection)
             .put_language(c.language.as_str())?
             .set_audio(cfg.0.audio)
-            .set_model_id(c.intent_model.as_str())
-            .set_intents(c.intents.as_ref());
+            .set_model_id(c.intent_model.as_str());
+            //.set_intents(c.intents.as_ref());
         self.builder = Some(builder);
         Ok(())
     }
@@ -159,6 +157,7 @@ impl Handler<SessionEvent> for Keeper {
                 if let Some(ref builder) = self.builder {
                     // let recognizer = builder.intent_recognizer()?;
                     let recognizer = builder.recognizer()?;
+                    log::debug!("recognizer has been created successfully!");
                     let sn = cmd.sn.clone();
                     let payload = cmd;
                     let session = Session {
@@ -177,8 +176,6 @@ impl Handler<SessionEvent> for Keeper {
         }
     }
 }
-
-
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 #[serde(default)]
@@ -297,36 +294,40 @@ fn handle_event_stream(
         let er = EventResult::from_event(evt)?;
 
         se.event = "session_asr_text".to_owned();
-        
+
         se.text = Some(er.text()?);
         se.echo = Some(actor.payload.recordfile.clone());
 
         se.result_sequence = Some(0);
         se.current_consume_sequence_id = Some(0);
-        se.errormsg = Some(String::from("0"));
+        se.errormsg = Some("0".to_string());
         se.errorcode = Some(0);
+
+        let url = &actor.settings.notify_prefix;
+        log::debug!(
+            "Notify started: {}: {:?}",
+            url,
+            serde_json::to_string(&se)
+        );
+        // body should be consumed for connection keep alive.
+        httpc::post(url)
+            .header("Authorization", actor.settings.auth_key.as_str())
+            .timeout(REQUEST_TIMEOUT)
+            .json(se)
+            .map_err(|err| {
+                log::error!("Failed to push data: {}", err);
+                err_msg("Failed to push data.")
+            })?
+            .send()
+            .map_err(|err| log::error!("Push data error: {}", err))
+            .and_then(|resp| resp.body().map_err(|err| log::error!("{}", err)))
+            .and_then(|_| Ok(()))
+            .into_actor(actor)
+            .spawn(ctx);
 
     } else {
         log::debug!("luis event: {:?}", flag);
         return Err(err_msg("unknown event type"));
     }
-
-    let url = &actor.settings.notify_prefix;
-    log::debug!("Notify started: {}: {:?}", url, serde_json::to_string(&se));
-    // body should be consumed for connection keep alive.
-    httpc::post(url)
-        .header("Authorization", actor.settings.auth_key.as_str())
-        .timeout(REQUEST_TIMEOUT)
-        .json(se)
-        .map_err(|err| {
-            log::error!("Failed to push data: {}", err);
-            err_msg("Failed to push data.")
-        })?
-        .send()
-        .map_err(|err| log::error!("Push data error: {}", err))
-        .and_then(|resp| resp.body().map_err(|err| log::error!("{}", err)))
-        .and_then(|_| Ok(()))
-        .into_actor(actor)
-        .spawn(ctx);
     Ok(())
 }

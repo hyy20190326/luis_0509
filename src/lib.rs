@@ -57,4 +57,3 @@ pub unsafe extern "C" fn write_stream(
     KEEPER.do_send(frame);
     return len as i32;
 }
-
